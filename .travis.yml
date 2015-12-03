@@ -1,0 +1,19 @@
+sudo: false
+
+script: |
+  # build and test build-monto
+  jdk_switcher use oraclejdk7
+  mvn -U compile
+  jdk_switcher use oraclejdk8
+  mvn verify
+  # # build (always) and deploy (master commits only)
+  # if [[ "$TRAVIS_BRANCH" = "master" && "$TRAVIS_PULL_REQUEST" = false ]]; then
+  #   mvn deploy
+  # else
+  #   # otherwise, just run test suite
+  #   mvn verify
+  # fi
+  
+cache:
+  directories:
+    - '$HOME/.m2/repository'

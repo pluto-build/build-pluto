@@ -1,0 +1,10 @@
+.metadata
+.recommenders
+tests/bin
+target/
+META-INF/
+
+testdata/*/*/*
+!testdata/*/foo/*
+
+/target/
