@@ -3,12 +3,11 @@ package build.pluto.buildpluto;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.sugarj.common.Exec;
 import org.sugarj.common.FileCommands;
-import org.sugarj.common.StringCommands;
-import org.sugarj.common.Exec.ExecutionResult;
 
 import build.pluto.builder.Builder;
 import build.pluto.builder.BuilderFactory;
@@ -75,15 +74,12 @@ public class CompileSourceCode extends Builder<CompileSourceCode.Input, None> {
     	// 2.a) resolve maven dependencies
     	MavenInput mavenInput = new MavenInput
     			.Builder()
-    			.addRepository(ExternalDependencies.PLUTO_MAVEN_REPO)
     			.addDependency(ExternalDependencies.COMMONS_CLI)
     			.build();
-    	requireBuild(MavenDependencyResolver.factory, mavenInput);
+    	ArrayList<File> mavenJars = requireBuild(MavenDependencyResolver.factory, mavenInput).val();
     	compilerOrigin.add(lastBuildReq());
     	
     	// 2.b) resolve and build git dependencies
-    	
-    	// sugarj common
     	File sugarjCommonJar = buildGitMaven(
     			new File(input.targetDir, "sugarj-common"),
     			ExternalDependencies.SUGARJ_COMMON_GIT_REPO,
@@ -97,7 +93,16 @@ public class CompileSourceCode extends Builder<CompileSourceCode.Input, None> {
     	// 2.c) compile pluto source code
     	requireBuild(input.sourceOrigin);
     	List<File> sourceFiles = FileCommands.listFilesRecursive(input.sourceDir, new FileExtensionFilter("java"));
-    	JavaInput javaInput = new JavaInput(sourceFiles, input.binDir, input.sourceDir, compilerOrigin.get(), JavacCompiler.instance);
+    	JavaInput javaInput = new JavaInput
+				.Builder()
+				.addInputFiles(sourceFiles)
+				.setFilesOrigin(compilerOrigin.get())
+				.setTargetDir(input.binDir)
+				.addSourcePaths(input.sourceDir)
+				.addClassPaths(mavenJars)
+				.addClassPaths(sugarjCommonJar, javaUtilJar)
+				.setCompiler(JavacCompiler.instance)
+				.get();
     	requireBuild(JavaBulkBuilder.factory, javaInput);
     	
     	return null;
@@ -113,8 +118,8 @@ public class CompileSourceCode extends Builder<CompileSourceCode.Input, None> {
     	String jarName = FileCommands.fileName(rootDir);
     	String command = String.format("mvn package --batch-mode -DskipTests -Djar.finalName=%s", jarName);
     	
-    	report("Run " + command);
-    	// TODO build-maven should provide a MavenBuilder that installs dependencies on required files
+    	report("Maven build " + jarName);
+    	// TODO build-maven must provide a MavenBuilder that installs dependencies on required files
     	Exec.run(rootDir, command.split(" "));
     	
     	File jar = new File(rootDir, "target/" + jarName + ".jar");
