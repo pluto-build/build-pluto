@@ -4,10 +4,16 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.List;
 
+import org.sugarj.common.FileCommands;
+
 import build.pluto.builder.BuildRequest;
 import build.pluto.builder.Builder;
 import build.pluto.builder.BuilderFactory;
 import build.pluto.builder.BuilderFactoryFactory;
+import build.pluto.buildjava.JavaBulkBuilder;
+import build.pluto.buildjava.JavaInput;
+import build.pluto.buildjava.compiler.JavacCompiler;
+import build.pluto.buildjava.util.FileExtensionFilter;
 import build.pluto.buildmaven.MavenDependencyResolver;
 import build.pluto.buildmaven.input.MavenInput;
 import build.pluto.dependency.Origin;
@@ -20,16 +26,16 @@ public class CompileSourceCode extends Builder<CompileSourceCode.Input, None> {
 
         public final File sourceDir;
         public final Origin sourceOrigin;
-        public final File target;
+        public final File targetDir;
         public List<? extends BuildRequest<?, ?, ?, ?>> requiredUnits;
 
         public Input(
         		File sourceDir,
         		Origin sourceOrigin,
-                File target) {
+                File targetDir) {
         	this.sourceDir = sourceDir;
         	this.sourceOrigin = sourceOrigin;
-            this.target = target;
+            this.targetDir = targetDir;
         }
     }
     
@@ -41,7 +47,7 @@ public class CompileSourceCode extends Builder<CompileSourceCode.Input, None> {
 
     @Override
     public File persistentPath(Input input) {
-        return new File(input.target, "pluto.compile.dep");
+        return new File(input.targetDir, "pluto.compile.dep");
     }
 
     @Override
@@ -52,9 +58,8 @@ public class CompileSourceCode extends Builder<CompileSourceCode.Input, None> {
     @Override
     protected None build(Input input) throws Throwable {
 
-    	Origin.Builder compilerOrigin = Origin.Builder();
+    	Origin.Builder compilerOrigin = Origin.Builder().add(input.sourceOrigin);
     	
-    	// 2) build pluto source code
     	// 2.a) resolve maven dependencies
     	MavenInput mavenInput = new MavenInput
     			.Builder()
@@ -65,11 +70,15 @@ public class CompileSourceCode extends Builder<CompileSourceCode.Input, None> {
     	compilerOrigin.add(lastBuildReq());
     	
     	// 2.b) resolve and build git dependencies
-    	
+    	// TODO sugarj common
+    	// TODO java util
     	
     	// 2.c) compile pluto source code
     	requireBuild(input.sourceOrigin);
-
+    	List<File> sourceFiles = FileCommands.listFilesRecursive(input.sourceDir, new FileExtensionFilter("java"));
+    	JavaInput javaInput = new JavaInput(sourceFiles, input.targetDir, input.sourceDir, compilerOrigin.get(), JavacCompiler.instance);
+    	requireBuild(JavaBulkBuilder.factory, javaInput);
+    	
     	return null;
     }
 }

@@ -4,9 +4,9 @@ import org.junit.Test;
 
 import build.pluto.buildpluto.Main;
 
-public class BuildMontoTest {
+public class BuildPlutoTest {
     @Test
-    public void testMontoBuildSucceeds() throws Throwable {
+    public void testPlutoBuildSucceeds() throws Throwable {
 		Main.main(new String[0]);
     }
 }

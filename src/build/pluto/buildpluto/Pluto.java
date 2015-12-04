@@ -49,9 +49,9 @@ public class Pluto extends Builder<Pluto.Input, None> {
     protected None build(Input input) throws Throwable {
     	
     	// 1) download pluto source code
-    	File sourceDir = new File(input.target, "src");
+    	File gitDir = new File(input.target, "src");
     	GitInput gitInput = new GitInput
-			.Builder(sourceDir, ExternalDependencies.PLUTO_GIT_REPO)
+			.Builder(gitDir, ExternalDependencies.PLUTO_GIT_REPO)
     		.setBranch("master")
     		.setConsistencyCheckInterval(RemoteRequirement.CHECK_ALWAYS)
     		.build();
@@ -59,13 +59,12 @@ public class Pluto extends Builder<Pluto.Input, None> {
     	Origin sourceOrigin = Origin.from(lastBuildReq());
     	
     	// 2) build pluto source code
-    	// 2.a) resolve maven dependencies
-    	// 2.b) resolve and build git dependencies
-    	// 2.c) compile pluto source code
+    	File sourceDir = new File(gitDir, "src");
+    	File binDir = new File(input.target, "bin");
     	CompileSourceCode.Input compileInput = new CompileSourceCode.Input(
     			sourceDir,
     			sourceOrigin,
-    			input.target);
+    			binDir);
     	requireBuild(CompileSourceCode.factory, compileInput);
     	BuildRequest<?, ?, ?, ?> compileReq = lastBuildReq();
     	
