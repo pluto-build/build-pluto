@@ -2,12 +2,15 @@ package build.pluto.buildpluto;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.List;
 
 import build.pluto.builder.BuildRequest;
 import build.pluto.builder.Builder;
 import build.pluto.builder.BuilderFactory;
 import build.pluto.builder.BuilderFactoryFactory;
+import build.pluto.buildgit.GitInput;
+import build.pluto.buildgit.GitRemoteSynchronizer;
+import build.pluto.dependency.Origin;
+import build.pluto.dependency.RemoteRequirement;
 import build.pluto.output.None;
 
 public class Pluto extends Builder<Pluto.Input, None> {
@@ -17,15 +20,12 @@ public class Pluto extends Builder<Pluto.Input, None> {
 
         public final File target;
         public final File jarLocation;
-        public List<BuildRequest<?, ?, ?, ?>> requiredUnits;
 
         public Input(
                 File target,
-                File jarLocation,
-                List<BuildRequest<?, ?, ?, ?>> requiredUnits) {
+                File jarLocation) {
             this.target = target;
             this.jarLocation = jarLocation;
-            this.requiredUnits = requiredUnits;
         }
     }
     
@@ -37,7 +37,7 @@ public class Pluto extends Builder<Pluto.Input, None> {
 
     @Override
     public File persistentPath(Input input) {
-        return new File(input.target, "services-base-java.dep");
+        return new File(input.target, "pluto.dep");
     }
 
     @Override
@@ -49,10 +49,26 @@ public class Pluto extends Builder<Pluto.Input, None> {
     protected None build(Input input) throws Throwable {
     	
     	// 1) download pluto source code
+    	File sourceDir = new File(input.target, "src");
+    	GitInput gitInput = new GitInput
+			.Builder(sourceDir, ExternalDependencies.PLUTO_GIT_REPO)
+    		.setBranch("master")
+    		.setConsistencyCheckInterval(RemoteRequirement.CHECK_ALWAYS)
+    		.build();
+    	requireBuild(GitRemoteSynchronizer.factory, gitInput);
+    	Origin sourceOrigin = Origin.from(lastBuildReq());
+    	
     	// 2) build pluto source code
     	// 2.a) resolve maven dependencies
     	// 2.b) resolve and build git dependencies
     	// 2.c) compile pluto source code
+    	CompileSourceCode.Input compileInput = new CompileSourceCode.Input(
+    			sourceDir,
+    			sourceOrigin,
+    			input.target);
+    	requireBuild(CompileSourceCode.factory, compileInput);
+    	BuildRequest<?, ?, ?, ?> compileReq = lastBuildReq();
+    	
     	// 3) test pluto source code
     	// 3.a) resolve maven test dependencies
     	// 3.b) resolve and build git test dependencies

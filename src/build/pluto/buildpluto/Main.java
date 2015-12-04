@@ -12,8 +12,7 @@ public class Main {
 		
 		Pluto.Input input = new Pluto.Input(
       		  new File("target/pluto"),
-      		  new File("target/pluto.jar"),
-      		  null);
+      		  new File("target/pluto.jar"));
 		
 		BuildManagers.build(new BuildRequest<>(Pluto.factory, input));
 	}

@@ -6,11 +6,13 @@ import build.pluto.buildmaven.input.Repository;
 import build.pluto.dependency.RemoteRequirement;
 
 public class ExternalDependencies {
-	public final String SUGARJ_COMMON_REPO = "https://github.com/sugar-lang/common";
+	public static final String PLUTO_GIT_REPO = "https://github.com/pluto-build/pluto";
 	
-	public final String JAVA_UTIL_PLUTO_REPO = "https://github.com/pluto-build/java-util";
+	public static final String SUGARJ_COMMON_GIT_REPO = "https://github.com/sugar-lang/common";
+	
+	public static final String JAVA_UTIL_PLUTO_GIT_REPO = "https://github.com/pluto-build/java-util";
 
-	public final Repository PLUTO_MAVEN_REPO = new Repository(
+	public static final Repository PLUTO_MAVEN_REPO = new Repository(
 			"pluto-build", 
 			"https://raw.githubusercontent.com/pluto-build/pluto-build.github.io/master/mvnrepository/",
 			"default",
@@ -26,6 +28,7 @@ public class ExternalDependencies {
                     null,
                     null),
         		RemoteRequirement.CHECK_NEVER);
+    
     public static final Dependency COMMONS_CLI =
         new Dependency(
             new ArtifactConstraint(
