@@ -18,13 +18,17 @@ public class Pluto extends Builder<Pluto.Input, None> {
     public static class Input implements Serializable {
         private static final long serialVersionUID = -8432928706675953694L;
 
-        public final File target;
+        public final File targetDir;
         public final File jarLocation;
 
+        /**
+         * @param targetDir Base directory for all generated files.
+         * @param jarLocation 
+         */
         public Input(
-                File target,
+                File targetDir,
                 File jarLocation) {
-            this.target = target;
+            this.targetDir = targetDir;
             this.jarLocation = jarLocation;
         }
     }
@@ -37,7 +41,7 @@ public class Pluto extends Builder<Pluto.Input, None> {
 
     @Override
     public File persistentPath(Input input) {
-        return new File(input.target, "pluto.dep");
+        return new File(input.targetDir, "pluto.dep");
     }
 
     @Override
@@ -49,7 +53,7 @@ public class Pluto extends Builder<Pluto.Input, None> {
     protected None build(Input input) throws Throwable {
     	
     	// 1) download pluto source code
-    	File gitDir = new File(input.target, "src");
+    	File gitDir = new File(input.targetDir, "src");
     	GitInput gitInput = new GitInput
 			.Builder(gitDir, ExternalDependencies.PLUTO_GIT_REPO)
     		.setBranch("master")
@@ -60,11 +64,12 @@ public class Pluto extends Builder<Pluto.Input, None> {
     	
     	// 2) build pluto source code
     	File sourceDir = new File(gitDir, "src");
-    	File binDir = new File(input.target, "bin");
+    	File binDir = new File(input.targetDir, "bin");
     	CompileSourceCode.Input compileInput = new CompileSourceCode.Input(
     			sourceDir,
     			sourceOrigin,
-    			binDir);
+    			binDir,
+    			input.targetDir);
     	requireBuild(CompileSourceCode.factory, compileInput);
     	BuildRequest<?, ?, ?, ?> compileReq = lastBuildReq();
     	
