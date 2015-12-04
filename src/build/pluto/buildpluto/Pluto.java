@@ -74,6 +74,14 @@ public class Pluto extends Builder<Pluto.Input, None> {
     	BuildRequest<?, ?, ?, ?> compileReq = lastBuildReq();
     	
     	// 3) test pluto source code
+    	File testDir = new File(gitDir, "test");
+    	File testBinDir = new File(input.targetDir, "bin-test");
+    	TestSourceCode.Input testInput = new TestSourceCode.Input(
+    			testDir, 
+    			sourceOrigin,
+    			testBinDir, 
+    			input.targetDir);
+    	
     	// 3.a) resolve maven test dependencies
     	// 3.b) resolve and build git test dependencies
     	// 3.c) compile pluto test code

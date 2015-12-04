@@ -22,7 +22,7 @@ import build.pluto.buildmaven.input.MavenInput;
 import build.pluto.dependency.Origin;
 import build.pluto.output.None;
 
-public class CompileSourceCode extends Builder<CompileSourceCode.Input, None> {
+public class TestSourceCode extends Builder<TestSourceCode.Input, None> {
 	
     public static class Input implements Serializable {
         private static final long serialVersionUID = -8432928706675953694L;
@@ -33,25 +33,25 @@ public class CompileSourceCode extends Builder<CompileSourceCode.Input, None> {
         public final File targetDir;
 
         /**
-         * @param sourceDir Base directory for source code (not test code).
-         * @param binDir Base directory for compiled source code.
+         * @param testSourceDir Base directory for test code (not source code).
+         * @param testBinDir Base directory for compiled test code.
          * @param targetDir Base directory for other artifacts.
          */
         public Input(
-        		File sourceDir,
+        		File testSourceDir,
         		Origin sourceOrigin,
-                File binDir,
+                File testBinDir,
                 File targetDir) {
-        	this.sourceDir = sourceDir;
+        	this.sourceDir = testSourceDir;
         	this.sourceOrigin = sourceOrigin;
-            this.binDir = binDir;
+            this.binDir = testBinDir;
             this.targetDir = targetDir;
         }
     }
     
-    public static BuilderFactory<Input, None, CompileSourceCode> factory = BuilderFactoryFactory.of(CompileSourceCode.class, Input.class);
+    public static BuilderFactory<Input, None, TestSourceCode> factory = BuilderFactoryFactory.of(TestSourceCode.class, Input.class);
 
-    public CompileSourceCode(Input input) {
+    public TestSourceCode(Input input) {
         super(input);
     }
 
