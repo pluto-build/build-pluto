@@ -2,8 +2,8 @@ package build.pluto.buildpluto;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.List;
 
-import build.pluto.builder.BuildRequest;
 import build.pluto.builder.Builder;
 import build.pluto.builder.BuilderFactory;
 import build.pluto.builder.BuilderFactoryFactory;
@@ -70,8 +70,7 @@ public class Pluto extends Builder<Pluto.Input, None> {
     			sourceOrigin,
     			binDir,
     			input.targetDir);
-    	requireBuild(CompileSourceCode.factory, compileInput);
-    	BuildRequest<?, ?, ?, ?> compileReq = lastBuildReq();
+    	List<File> sourceClassPath = requireBuild(CompileSourceCode.factory, compileInput).val();
     	
     	// 3) test pluto source code
     	File testDir = new File(gitDir, "test");
@@ -79,13 +78,11 @@ public class Pluto extends Builder<Pluto.Input, None> {
     	TestSourceCode.Input testInput = new TestSourceCode.Input(
     			testDir, 
     			sourceOrigin,
-    			testBinDir, 
+    			testBinDir,
+    			sourceClassPath,
     			input.targetDir);
+    	requireBuild(TestSourceCode.factory, testInput);
     	
-    	// 3.a) resolve maven test dependencies
-    	// 3.b) resolve and build git test dependencies
-    	// 3.c) compile pluto test code
-    	// 3.d) run tests
     	// 4) deploy
     	
     	return null;

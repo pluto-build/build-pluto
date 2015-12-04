@@ -3,6 +3,8 @@ package build.pluto.buildpluto;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.sugarj.common.Exec;
@@ -20,9 +22,10 @@ import build.pluto.buildjava.util.FileExtensionFilter;
 import build.pluto.buildmaven.MavenDependencyResolver;
 import build.pluto.buildmaven.input.MavenInput;
 import build.pluto.dependency.Origin;
-import build.pluto.output.None;
+import build.pluto.output.Out;
+import build.pluto.output.OutputPersisted;
 
-public class CompileSourceCode extends Builder<CompileSourceCode.Input, None> {
+public class CompileSourceCode extends Builder<CompileSourceCode.Input, Out<List<File>>> {
 	
     public static class Input implements Serializable {
         private static final long serialVersionUID = -8432928706675953694L;
@@ -35,7 +38,7 @@ public class CompileSourceCode extends Builder<CompileSourceCode.Input, None> {
         /**
          * @param sourceDir Base directory for source code (not test code).
          * @param binDir Base directory for compiled source code.
-         * @param targetDir Base directory for other artifacts.
+         * @param targetDir Base directory for other generated artifacts.
          */
         public Input(
         		File sourceDir,
@@ -49,7 +52,7 @@ public class CompileSourceCode extends Builder<CompileSourceCode.Input, None> {
         }
     }
     
-    public static BuilderFactory<Input, None, CompileSourceCode> factory = BuilderFactoryFactory.of(CompileSourceCode.class, Input.class);
+    public static BuilderFactory<Input, Out<List<File>>, CompileSourceCode> factory = BuilderFactoryFactory.of(CompileSourceCode.class, Input.class);
 
     public CompileSourceCode(Input input) {
         super(input);
@@ -66,7 +69,7 @@ public class CompileSourceCode extends Builder<CompileSourceCode.Input, None> {
     }
 
     @Override
-    protected None build(Input input) throws Throwable {
+    protected Out<List<File>> build(Input input) throws Throwable {
 
     	Origin.Builder compilerOrigin = Origin.Builder().add(input.sourceOrigin);
     	
@@ -104,7 +107,12 @@ public class CompileSourceCode extends Builder<CompileSourceCode.Input, None> {
 				.get();
     	requireBuild(JavaBulkBuilder.factory, javaInput);
     	
-    	return null;
+    	List<File> classpath = new ArrayList<>(mavenJars);
+    	classpath.add(sugarjCommonJar);
+    	classpath.add(javaUtilJar);
+    	classpath.add(input.binDir);
+    	
+    	return OutputPersisted.of(Collections.unmodifiableList(classpath));
     }
 
 	private File buildGitMaven(File rootDir, String gitRepository, String branch) throws IOException {
