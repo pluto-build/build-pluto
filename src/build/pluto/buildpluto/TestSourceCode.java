@@ -6,8 +6,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.sugarj.common.Exec;
+import org.sugarj.common.Exec.ExecutionError;
 import org.sugarj.common.FileCommands;
+import org.sugarj.common.JavaCommands;
+import org.sugarj.common.StringCommands;
 
+import build.pluto.BuildUnit.State;
 import build.pluto.builder.Builder;
 import build.pluto.builder.BuilderFactory;
 import build.pluto.builder.BuilderFactoryFactory;
@@ -103,11 +108,25 @@ public class TestSourceCode extends Builder<TestSourceCode.Input, Out<List<File>
     	requireBuild(JavaBulkBuilder.factory, javaInput);
 
     	// 3.c) run tests
-    	
-    	// TODO
-    	
     	List<File> classpath = new ArrayList<>(mavenJars);
-    	classpath.add(input.testBinDir);
+    	classpath.add(input.testBinDir.getAbsoluteFile());
+    	classpath.addAll(input.sourceClassPath);
+    	String classpathString = StringCommands.printListSeparated(classpath, ":");
+
+    	try {
+    		// Start new JVM in separate process for testing 
+	    	Exec.run(input.testBinDir, 
+	    			"java",
+	    			"-cp", classpathString,
+	    			"org.junit.runner.JUnitCore",
+	    			"build.pluto.test.build.RebuildInconsistentTest"); // build.pluto.test.PlutoTestSuite
+    	} catch (ExecutionError e) {
+    		String msg = StringCommands.printListSeparated(e.outMsgs, "\n");
+    		String cmd = StringCommands.printListSeparated(e.cmds, " ");
+    		reportError("Pluto tests failed>>>\n" + cmd + "\n" + msg);
+    		report("<<<Pluto tests failed");
+    		setState(State.FAILURE);
+    	}
     	
     	return OutputPersisted.of(Collections.unmodifiableList(classpath));
     }
