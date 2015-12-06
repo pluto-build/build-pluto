@@ -46,7 +46,7 @@ public class Pluto extends Builder<Pluto.Input, None> {
 
     @Override
     protected String description(Input input) {
-        return "Build pluto";
+        return "Build, test, and deploy pluto";
     }
 
     @Override
@@ -71,6 +71,7 @@ public class Pluto extends Builder<Pluto.Input, None> {
     			binDir,
     			input.targetDir);
     	List<File> sourceClassPath = requireBuild(CompileSourceCode.factory, compileInput).val();
+    	Origin sourceClassesOrigin = Origin.from(lastBuildReq());
     	
     	// 3) test pluto source code
     	File testDir = new File(gitDir, "test");
@@ -80,6 +81,7 @@ public class Pluto extends Builder<Pluto.Input, None> {
     			sourceOrigin,
     			testBinDir,
     			sourceClassPath,
+    			sourceClassesOrigin,
     			input.targetDir);
     	requireBuild(TestSourceCode.factory, testInput);
     	

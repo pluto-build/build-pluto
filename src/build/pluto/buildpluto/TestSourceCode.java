@@ -30,6 +30,7 @@ public class TestSourceCode extends Builder<TestSourceCode.Input, Out<List<File>
         public final Origin testSourceOrigin;
         public final File testBinDir;
         public final List<File> sourceClassPath;
+        public final Origin sourceClassesOrigin;
         public final File targetDir;
 
         /**
@@ -40,14 +41,16 @@ public class TestSourceCode extends Builder<TestSourceCode.Input, Out<List<File>
          */
         public Input(
         		File testSourceDir,
-        		Origin sourceOrigin,
+        		Origin testSourceOrigin,
                 File testBinDir,
                 List<File> sourceClassPath,
+                Origin sourceClassesOrigin,
                 File targetDir) {
         	this.testSourceDir = testSourceDir;
-        	this.testSourceOrigin = sourceOrigin;
+        	this.testSourceOrigin = testSourceOrigin;
             this.testBinDir = testBinDir;
             this.sourceClassPath = sourceClassPath;
+            this.sourceClassesOrigin = sourceClassesOrigin;
             this.targetDir = targetDir;
         }
     }
@@ -71,7 +74,10 @@ public class TestSourceCode extends Builder<TestSourceCode.Input, Out<List<File>
     @Override
     protected Out<List<File>> build(Input input) throws Throwable {
 
-    	Origin.Builder compilerOrigin = Origin.Builder().add(input.testSourceOrigin);
+    	Origin.Builder compilerOrigin = Origin
+    			.Builder()
+    			.add(input.testSourceOrigin)
+    			.add(input.sourceClassesOrigin);
     	
     	// 3.a) resolve maven test dependencies
     	MavenInput mavenInput = new MavenInput
