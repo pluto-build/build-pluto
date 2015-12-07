@@ -9,7 +9,6 @@ import java.util.List;
 import org.sugarj.common.Exec;
 import org.sugarj.common.Exec.ExecutionError;
 import org.sugarj.common.FileCommands;
-import org.sugarj.common.JavaCommands;
 import org.sugarj.common.StringCommands;
 
 import build.pluto.BuildUnit.State;
@@ -32,6 +31,7 @@ public class TestSourceCode extends Builder<TestSourceCode.Input, Out<List<File>
         private static final long serialVersionUID = -8432928706675953694L;
 
         public final File testSourceDir;
+        public final File testDataDir;
         public final Origin testSourceOrigin;
         public final File testBinDir;
         public final List<File> sourceClassPath;
@@ -46,12 +46,14 @@ public class TestSourceCode extends Builder<TestSourceCode.Input, Out<List<File>
          */
         public Input(
         		File testSourceDir,
+        		File testDataDir,
         		Origin testSourceOrigin,
                 File testBinDir,
                 List<File> sourceClassPath,
                 Origin sourceClassesOrigin,
                 File targetDir) {
         	this.testSourceDir = testSourceDir;
+        	this.testDataDir = testDataDir;
         	this.testSourceOrigin = testSourceOrigin;
             this.testBinDir = testBinDir;
             this.sourceClassPath = sourceClassPath;
@@ -98,7 +100,7 @@ public class TestSourceCode extends Builder<TestSourceCode.Input, Out<List<File>
     	JavaInput javaInput = new JavaInput
 				.Builder()
 				.addInputFiles(testSourceFiles)
-				.setFilesOrigin(compilerOrigin.get())
+				.setSourceOrigin(compilerOrigin.get())
 				.setTargetDir(input.testBinDir)
 				.addSourcePaths(input.testSourceDir)
 				.addClassPaths(mavenJars)
@@ -110,18 +112,20 @@ public class TestSourceCode extends Builder<TestSourceCode.Input, Out<List<File>
     	// 3.c) run tests
     	List<File> classpath = new ArrayList<>(mavenJars);
     	classpath.add(input.testBinDir.getAbsoluteFile());
-    	classpath.addAll(input.sourceClassPath);
+    	for (File cp : input.sourceClassPath)
+    		classpath.add(cp.getAbsoluteFile());
     	String classpathString = StringCommands.printListSeparated(classpath, ":");
 
+    	report("Execute unit tests");
     	try {
     		// Start new JVM in separate process for testing 
-	    	Exec.run(input.testBinDir, 
+	    	Exec.run(input.testSourceDir.getParentFile(), 
 	    			"java",
 	    			"-cp", classpathString,
 	    			"org.junit.runner.JUnitCore",
 	    			"build.pluto.test.build.RebuildInconsistentTest"); // build.pluto.test.PlutoTestSuite
     	} catch (ExecutionError e) {
-    		String msg = StringCommands.printListSeparated(e.outMsgs, "\n");
+    		String msg = StringCommands.printListSeparated(e.outMsgs, "\n") + StringCommands.printListSeparated(e.errMsgs, "\n");
     		String cmd = StringCommands.printListSeparated(e.cmds, " ");
     		reportError("Pluto tests failed>>>\n" + cmd + "\n" + msg);
     		report("<<<Pluto tests failed");

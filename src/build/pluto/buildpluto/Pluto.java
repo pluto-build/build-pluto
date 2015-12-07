@@ -75,9 +75,11 @@ public class Pluto extends Builder<Pluto.Input, None> {
     	
     	// 3) test pluto source code
     	File testDir = new File(gitDir, "test");
+    	File testDataDir = new File(gitDir, "testdata");
     	File testBinDir = new File(input.targetDir, "bin-test");
     	TestSourceCode.Input testInput = new TestSourceCode.Input(
-    			testDir, 
+    			testDir,
+    			testDataDir,
     			sourceOrigin,
     			testBinDir,
     			sourceClassPath,

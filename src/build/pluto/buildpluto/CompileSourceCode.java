@@ -98,7 +98,7 @@ public class CompileSourceCode extends Builder<CompileSourceCode.Input, Out<List
     	JavaInput javaInput = new JavaInput
 				.Builder()
 				.addInputFiles(sourceFiles)
-				.setFilesOrigin(compilerOrigin.get())
+				.setSourceOrigin(compilerOrigin.get())
 				.setTargetDir(input.binDir)
 				.addSourcePaths(input.sourceDir)
 				.addClassPaths(mavenJars)
@@ -129,7 +129,7 @@ public class CompileSourceCode extends Builder<CompileSourceCode.Input, Out<List
     	// TODO build-maven must provide a MavenBuilder that installs dependencies on required files
     	Exec.run(rootDir, command.split(" "));
     	
-    	File jar = new File(rootDir, "target/" + jarName + ".jar");
+    	File jar = new File(rootDir, "target/" + jarName + ".jar").getAbsoluteFile();
     	if (!jar.exists())
     		throw new IllegalStateException("File " + jar + " does not exist.");
     	return jar;
