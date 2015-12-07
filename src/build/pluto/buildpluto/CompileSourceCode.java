@@ -16,8 +16,8 @@ import build.pluto.builder.BuilderFactory;
 import build.pluto.builder.BuilderFactoryFactory;
 import build.pluto.buildgit.GitInput;
 import build.pluto.buildgit.GitRemoteSynchronizer;
-import build.pluto.buildjava.JavaBulkBuilder;
-import build.pluto.buildjava.JavaInput;
+import build.pluto.buildjava.JavaBulkCompiler;
+import build.pluto.buildjava.JavaCompilerInput;
 import build.pluto.buildjava.compiler.JavacCompiler;
 import build.pluto.buildjava.util.FileExtensionFilter;
 import build.pluto.buildmaven.MavenDependencyResolver;
@@ -96,7 +96,7 @@ public class CompileSourceCode extends Builder<CompileSourceCode.Input, Out<List
     	// 2.c) compile pluto source code
     	requireBuild(input.sourceOrigin);
     	List<File> sourceFiles = FileCommands.listFilesRecursive(input.sourceDir, new FileExtensionFilter("java"));
-    	JavaInput javaInput = new JavaInput
+    	JavaCompilerInput javaInput = new JavaCompilerInput
 				.Builder()
 				.addInputFiles(sourceFiles)
 				.setSourceOrigin(compilerOrigin.get())
@@ -106,7 +106,7 @@ public class CompileSourceCode extends Builder<CompileSourceCode.Input, Out<List
 				.addClassPaths(sugarjCommonJar, javaUtilJar)
 				.setCompiler(JavacCompiler.instance)
 				.get();
-    	requireBuild(JavaBulkBuilder.factory, javaInput);
+    	requireBuild(JavaBulkCompiler.factory, javaInput);
     	
     	List<File> classpath = new ArrayList<>(mavenJars);
     	classpath.add(sugarjCommonJar);

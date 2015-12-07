@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.sugarj.common.Exec;
 import org.sugarj.common.Exec.ExecutionError;
+import org.sugarj.common.Exec.ExecutionResult;
 import org.sugarj.common.FileCommands;
 import org.sugarj.common.StringCommands;
 
@@ -15,8 +16,8 @@ import build.pluto.BuildUnit.State;
 import build.pluto.builder.Builder;
 import build.pluto.builder.BuilderFactory;
 import build.pluto.builder.BuilderFactoryFactory;
-import build.pluto.buildjava.JavaBulkBuilder;
-import build.pluto.buildjava.JavaInput;
+import build.pluto.buildjava.JavaBulkCompiler;
+import build.pluto.buildjava.JavaCompilerInput;
 import build.pluto.buildjava.compiler.JavacCompiler;
 import build.pluto.buildjava.util.FileExtensionFilter;
 import build.pluto.buildmaven.MavenDependencyResolver;
@@ -97,7 +98,7 @@ public class TestSourceCode extends Builder<TestSourceCode.Input, Out<List<File>
     	// 3.b) compile pluto test code
     	requireBuild(input.testSourceOrigin);
     	List<File> testSourceFiles = FileCommands.listFilesRecursive(input.testSourceDir, new FileExtensionFilter("java"));
-    	JavaInput javaInput = new JavaInput
+    	JavaCompilerInput javaInput = new JavaCompilerInput
 				.Builder()
 				.addInputFiles(testSourceFiles)
 				.setSourceOrigin(compilerOrigin.get())
@@ -107,7 +108,7 @@ public class TestSourceCode extends Builder<TestSourceCode.Input, Out<List<File>
 				.addClassPaths(input.sourceClassPath)
 				.setCompiler(JavacCompiler.instance)
 				.get();
-    	requireBuild(JavaBulkBuilder.factory, javaInput);
+    	requireBuild(JavaBulkCompiler.factory, javaInput);
 
     	// 3.c) run tests
     	FileCommands.copyDirectory(input.testDataDir, new File(input.testBinDir, "testdata"));
@@ -121,11 +122,12 @@ public class TestSourceCode extends Builder<TestSourceCode.Input, Out<List<File>
     	report("Execute pluto unit tests");
     	try {
     		// Start new JVM in separate process for testing 
-	    	Exec.run(input.testBinDir, 
+	    	ExecutionResult er = Exec.run(input.testBinDir, 
 	    			"java",
 	    			"-cp", classpathString,
 	    			"org.junit.runner.JUnitCore",
 	    			"build.pluto.test.PlutoTestSuite");
+	    	System.out.println(StringCommands.printListSeparated(er.cmds, " "));
     	} catch (ExecutionError e) {
     		String msg = StringCommands.printListSeparated(e.outMsgs, "\n") + StringCommands.printListSeparated(e.errMsgs, "\n");
     		String cmd = StringCommands.printListSeparated(e.cmds, " ");
