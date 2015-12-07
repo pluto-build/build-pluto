@@ -8,7 +8,6 @@ import java.util.List;
 
 import org.sugarj.common.Exec;
 import org.sugarj.common.Exec.ExecutionError;
-import org.sugarj.common.Exec.ExecutionResult;
 import org.sugarj.common.FileCommands;
 import org.sugarj.common.StringCommands;
 
@@ -111,6 +110,8 @@ public class TestSourceCode extends Builder<TestSourceCode.Input, Out<List<File>
     	requireBuild(JavaBulkBuilder.factory, javaInput);
 
     	// 3.c) run tests
+    	FileCommands.copyDirectory(input.testDataDir, new File(input.testBinDir, "testdata"));
+    	
     	List<File> classpath = new ArrayList<>(mavenJars);
     	classpath.add(input.testBinDir.getAbsoluteFile());
     	for (File cp : input.sourceClassPath)
@@ -120,7 +121,7 @@ public class TestSourceCode extends Builder<TestSourceCode.Input, Out<List<File>
     	report("Execute pluto unit tests");
     	try {
     		// Start new JVM in separate process for testing 
-	    	Exec.run(input.testSourceDir.getParentFile(), 
+	    	Exec.run(input.testBinDir, 
 	    			"java",
 	    			"-cp", classpathString,
 	    			"org.junit.runner.JUnitCore",
