@@ -6,8 +6,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.junit.runner.JUnitCore;
 import org.sugarj.common.Exec;
 import org.sugarj.common.Exec.ExecutionError;
+import org.sugarj.common.Exec.ExecutionResult;
 import org.sugarj.common.FileCommands;
 import org.sugarj.common.StringCommands;
 
@@ -116,14 +118,14 @@ public class TestSourceCode extends Builder<TestSourceCode.Input, Out<List<File>
     		classpath.add(cp.getAbsoluteFile());
     	String classpathString = StringCommands.printListSeparated(classpath, ":");
 
-    	report("Execute unit tests");
+    	report("Execute pluto unit tests");
     	try {
     		// Start new JVM in separate process for testing 
 	    	Exec.run(input.testSourceDir.getParentFile(), 
 	    			"java",
 	    			"-cp", classpathString,
 	    			"org.junit.runner.JUnitCore",
-	    			"build.pluto.test.build.RebuildInconsistentTest"); // build.pluto.test.PlutoTestSuite
+	    			"build.pluto.test.PlutoTestSuite");
     	} catch (ExecutionError e) {
     		String msg = StringCommands.printListSeparated(e.outMsgs, "\n") + StringCommands.printListSeparated(e.errMsgs, "\n");
     		String cmd = StringCommands.printListSeparated(e.cmds, " ");
