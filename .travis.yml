@@ -2,13 +2,13 @@ sudo: false
 
 script: |
   # build and test build-pluto
-  mvn verify
+  mvn -U verify
   # # build (always) and deploy (master commits only)
   # if [[ "$TRAVIS_BRANCH" = "master" && "$TRAVIS_PULL_REQUEST" = false ]]; then
-  #   mvn deploy
+  #   mvn -U deploy
   # else
   #   # otherwise, just run test suite
-  #   mvn verify
+  #   mvn -U verify
   # fi
   
 cache:
