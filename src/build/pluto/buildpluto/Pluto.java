@@ -3,6 +3,7 @@ package build.pluto.buildpluto;
 import java.io.File;
 import java.io.Serializable;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import build.pluto.builder.Builder;
 import build.pluto.builder.BuilderFactory;
@@ -10,7 +11,6 @@ import build.pluto.builder.BuilderFactoryFactory;
 import build.pluto.buildgit.GitInput;
 import build.pluto.buildgit.GitRemoteSynchronizer;
 import build.pluto.dependency.Origin;
-import build.pluto.dependency.RemoteRequirement;
 import build.pluto.output.None;
 
 public class Pluto extends Builder<Pluto.Input, None> {
@@ -57,8 +57,9 @@ public class Pluto extends Builder<Pluto.Input, None> {
     	GitInput gitInput = new GitInput
 			.Builder(gitDir, ExternalDependencies.PLUTO_GIT_REPO)
     		.setBranch("master")
-    		.setConsistencyCheckInterval(RemoteRequirement.CHECK_ALWAYS)
+    		.setConsistencyCheckInterval(TimeUnit.SECONDS.toMillis(60))
     		.build();
+    	System.out.println();
     	requireBuild(GitRemoteSynchronizer.factory, gitInput);
     	Origin sourceOrigin = Origin.from(lastBuildReq());
     	

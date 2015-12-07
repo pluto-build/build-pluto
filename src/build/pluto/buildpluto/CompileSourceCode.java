@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.sugarj.common.Exec;
 import org.sugarj.common.FileCommands;
@@ -119,6 +120,7 @@ public class CompileSourceCode extends Builder<CompileSourceCode.Input, Out<List
     	GitInput gitInput = new GitInput
     			.Builder(rootDir, gitRepository)
     			.setBranch(branch)
+    			.setConsistencyCheckInterval(TimeUnit.MINUTES.toMillis(15))
     			.build();
     	requireBuild(GitRemoteSynchronizer.factory, gitInput);
     	
