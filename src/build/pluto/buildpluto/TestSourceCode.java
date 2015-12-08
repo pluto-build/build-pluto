@@ -15,6 +15,7 @@ import build.pluto.BuildUnit.State;
 import build.pluto.builder.Builder;
 import build.pluto.builder.BuilderFactory;
 import build.pluto.builder.BuilderFactoryFactory;
+import build.pluto.builder.RequiredBuilderFailed;
 import build.pluto.buildjava.JavaBulkCompiler;
 import build.pluto.buildjava.JavaCompilerInput;
 import build.pluto.buildjava.JavaRunner;
@@ -142,11 +143,15 @@ public class TestSourceCode extends Builder<TestSourceCode.Input, Out<List<File>
 				String cmd = StringCommands.printListSeparated(er.cmds, " ");
 				throw new IllegalStateException("Could not find status message of test execution: " + cmd + "\n" + msg);
 			}
-    	} catch (ExecutionError e) {
-    		String msg = StringCommands.printListSeparated(e.outMsgs, "\n") + StringCommands.printListSeparated(e.errMsgs, "\n");
-    		String cmd = StringCommands.printListSeparated(e.cmds, " ");
-    		reportError("Pluto tests failed>>>\n" + cmd + "\n" + msg + "\n" + "<<<Pluto tests failed");
-    		setState(State.FAILURE);
+    	} catch (RequiredBuilderFailed e) {
+    		Throwable cause = e.getRootCause();
+			if (cause instanceof ExecutionError) {
+				ExecutionError ee = (ExecutionError) cause;
+	    		String msg = StringCommands.printListSeparated(ee.outMsgs, "\n") + StringCommands.printListSeparated(ee.errMsgs, "\n");
+	    		String cmd = StringCommands.printListSeparated(ee.cmds, " ");
+	    		reportError("Pluto tests failed>>>\n" + cmd + "\n" + msg + "\n" + "<<<Pluto tests failed");
+	    		setState(State.FAILURE);
+			}
     	}
     	
 		List<File> classpath = new ArrayList<>();
