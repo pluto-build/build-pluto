@@ -89,7 +89,12 @@ public class Pluto extends Builder<Pluto.Input, None> {
     	requireBuild(TestSourceCode.factory, testInput);
     	
     	// 4) deploy
-    	// TODO
+    	Deploy.Input deployInput = new Deploy.Input(
+    			binDir,
+    			sourceClassesOrigin, 
+    			"1.7.0-SNAPSHOT",
+    			input.targetDir);
+    	requireBuild(Deploy.factory, deployInput);
     	
     	return null;
     }
