@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import org.sugarj.common.Exec;
 import org.sugarj.common.Exec.ExecutionError;
 import org.sugarj.common.Exec.ExecutionResult;
 import org.sugarj.common.FileCommands;
@@ -18,6 +17,8 @@ import build.pluto.builder.BuilderFactory;
 import build.pluto.builder.BuilderFactoryFactory;
 import build.pluto.buildjava.JavaBulkCompiler;
 import build.pluto.buildjava.JavaCompilerInput;
+import build.pluto.buildjava.JavaRunner;
+import build.pluto.buildjava.JavaRunnerInput;
 import build.pluto.buildjava.compiler.JavacCompiler;
 import build.pluto.buildjava.util.FileExtensionFilter;
 import build.pluto.buildmaven.MavenDependencyResolver;
@@ -87,6 +88,10 @@ public class TestSourceCode extends Builder<TestSourceCode.Input, Out<List<File>
     			.add(input.testSourceOrigin)
     			.add(input.sourceClassesOrigin);
     	
+    	Origin.Builder javaOrigin = Origin
+    			.Builder()
+    			.add(input.sourceClassesOrigin);
+    	
     	// 3.a) resolve maven test dependencies
     	MavenInput mavenInput = new MavenInput
     			.Builder()
@@ -98,7 +103,7 @@ public class TestSourceCode extends Builder<TestSourceCode.Input, Out<List<File>
     	// 3.b) compile pluto test code
     	requireBuild(input.testSourceOrigin);
     	List<File> testSourceFiles = FileCommands.listFilesRecursive(input.testSourceDir, new FileExtensionFilter("java"));
-    	JavaCompilerInput javaInput = new JavaCompilerInput
+    	JavaCompilerInput javacInput = new JavaCompilerInput
 				.Builder()
 				.addInputFiles(testSourceFiles)
 				.setSourceOrigin(compilerOrigin.get())
@@ -108,34 +113,47 @@ public class TestSourceCode extends Builder<TestSourceCode.Input, Out<List<File>
 				.addClassPaths(input.sourceClassPath)
 				.setCompiler(JavacCompiler.instance)
 				.get();
-    	requireBuild(JavaBulkCompiler.factory, javaInput);
+    	requireBuild(JavaBulkCompiler.factory, javacInput);
+    	javaOrigin.add(lastBuildReq());
 
     	// 3.c) run tests
     	FileCommands.copyDirectory(input.testDataDir, new File(input.testBinDir, "testdata"));
     	
-    	List<File> classpath = new ArrayList<>(mavenJars);
-    	classpath.add(input.testBinDir.getAbsoluteFile());
-    	for (File cp : input.sourceClassPath)
-    		classpath.add(cp.getAbsoluteFile());
-    	String classpathString = StringCommands.printListSeparated(classpath, ":");
-
-    	report("Execute pluto unit tests");
+    	JavaRunnerInput javaInput = JavaRunnerInput
+    			.Builder()
+    			.setDescription("Execute pluto unit tests")
+    			.setWorkingDir(input.testBinDir)
+    			.setMainClass("org.junit.runner.JUnitCore")
+    			.addProgramArgs("build.pluto.test.PlutoTestSuite")
+    			.addClassPaths(input.testBinDir)
+    			.addClassPaths(input.sourceClassPath)
+    			.addClassPaths(mavenJars)
+    			.setClassOrigin(javaOrigin.get())
+    			.get();
+    	
     	try {
-    		// Start new JVM in separate process for testing 
-	    	ExecutionResult er = Exec.run(input.testBinDir, 
-	    			"java",
-	    			"-cp", classpathString,
-	    			"org.junit.runner.JUnitCore",
-	    			"build.pluto.test.PlutoTestSuite");
-	    	System.out.println(StringCommands.printListSeparated(er.cmds, " "));
+			ExecutionResult er = requireBuild(JavaRunner.factory, javaInput).val();
+			if (er.outMsgs.length > 1) {
+				String status = er.outMsgs[er.outMsgs.length - 2];
+				report("Test result " + status);
+			}
+			else {
+				String msg = StringCommands.printListSeparated(er.outMsgs, "\n") + StringCommands.printListSeparated(er.errMsgs, "\n");
+				String cmd = StringCommands.printListSeparated(er.cmds, " ");
+				throw new IllegalStateException("Could not find status message of test execution: " + cmd + "\n" + msg);
+			}
     	} catch (ExecutionError e) {
     		String msg = StringCommands.printListSeparated(e.outMsgs, "\n") + StringCommands.printListSeparated(e.errMsgs, "\n");
     		String cmd = StringCommands.printListSeparated(e.cmds, " ");
-    		reportError("Pluto tests failed>>>\n" + cmd + "\n" + msg);
-    		report("<<<Pluto tests failed");
+    		reportError("Pluto tests failed>>>\n" + cmd + "\n" + msg + "\n" + "<<<Pluto tests failed");
     		setState(State.FAILURE);
     	}
     	
+		List<File> classpath = new ArrayList<>();
+		classpath.add(input.testBinDir);
+		classpath.addAll(input.sourceClassPath);
+		classpath.addAll(mavenJars);
+
     	return OutputPersisted.of(Collections.unmodifiableList(classpath));
     }
 }
