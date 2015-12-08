@@ -154,7 +154,8 @@ public class TestSourceCode extends Builder<TestSourceCode.Input, Out<List<File>
 			}
     	}
     	
-		List<File> classpath = new ArrayList<>();
+    	// 3.d) return classpath for compiled test code
+    	List<File> classpath = new ArrayList<>();
 		classpath.add(input.testBinDir);
 		classpath.addAll(input.sourceClassPath);
 		classpath.addAll(mavenJars);

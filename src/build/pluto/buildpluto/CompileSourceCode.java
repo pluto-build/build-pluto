@@ -108,6 +108,7 @@ public class CompileSourceCode extends Builder<CompileSourceCode.Input, Out<List
 				.get();
     	requireBuild(JavaBulkCompiler.factory, javaInput);
     	
+    	// 2.d) return classpath for compiled code
     	List<File> classpath = new ArrayList<>(mavenJars);
     	classpath.add(sugarjCommonJar);
     	classpath.add(javaUtilJar);
