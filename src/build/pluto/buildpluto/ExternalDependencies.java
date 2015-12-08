@@ -12,15 +12,9 @@ public class ExternalDependencies {
 	
 	public static final String JAVA_UTIL_PLUTO_GIT_REPO = "https://github.com/pluto-build/java-util";
 
-//	public static final Repository PLUTO_MAVEN_REPO = new Repository(
-//			"pluto-build", 
-//			"https://raw.githubusercontent.com/pluto-build/pluto-build.github.io/master/mvnrepository/",
-//			"default",
-//			Repository.ENABLED_DEFAULT_POLICY,
-//			Repository.DISABLED_DEFAULT_POLICY);
 	public static final Repository PLUTO_MAVEN_REPO = new Repository(
 			"pluto-build", 
-			"file:///Users/seba/projects/build/maven-repository/",
+			"https://raw.githubusercontent.com/pluto-build/pluto-build.github.io/master/mvnrepository/",
 			"default",
 			Repository.ENABLED_DEFAULT_POLICY,
 			Repository.DISABLED_DEFAULT_POLICY);
