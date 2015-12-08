@@ -2,12 +2,21 @@ package build.pluto.buildpluto;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.sugarj.common.FileCommands;
 
 import build.pluto.builder.Builder;
 import build.pluto.builder.BuilderFactory;
 import build.pluto.builder.BuilderFactoryFactory;
+import build.pluto.buildjava.JavaJar;
+import build.pluto.buildjava.util.FileExtensionFilter;
 import build.pluto.buildmaven.MavenDeployer;
 import build.pluto.buildmaven.MavenHandler;
+import build.pluto.buildmaven.PomGenerator;
 import build.pluto.buildmaven.input.Artifact;
 import build.pluto.dependency.Origin;
 import build.pluto.output.Out;
@@ -60,14 +69,28 @@ public class Deploy extends Builder<Deploy.Input, Out<File>> {
     protected Out<File> build(Input input) throws Throwable {
 
     	// 4.a) package jar file
+    	File artifactJar = new File(input.targetDir, "pluto.jar");
+    	
     	requireBuild(input.classesOrigin);
-    	File artifactJar = null;
-    	Origin artifactOrigin = null;
+    	List<File> classfilePaths = FileCommands.listFilesRecursive(input.classesDir, new FileExtensionFilter("class"));
+        if (classfilePaths.isEmpty())
+        	throw new IllegalStateException("No class files found for packaging");
+        Set<File> classefiles = new HashSet<>(classfilePaths);
+        
+        JavaJar.Input jarInput = new JavaJar.Input(
+                JavaJar.Mode.CreateOrUpdate,
+                artifactJar,
+                null,
+                Collections.singletonMap(input.classesDir, classefiles),
+                input.classesOrigin);
+        requireBuild(JavaJar.factory, jarInput);
+    	Origin artifactOrigin = Origin.from(lastBuildReq());
     	
     	// 4.b) generate pom file
-    	File pomFile = null;
-    	Origin pomOrigin = null;
     	Artifact artifact = new Artifact("build.pluto", "pluto", input.version, null, null);
+    	File pomFile = new File(input.targetDir, "pom.xml");
+    	requireBuild(PomGenerator.factory, new PomGenerator.Input(artifact, pomFile));
+    	Origin pomOrigin = Origin.from(lastBuildReq());
     	
     	// 4.c) deploy to maven
     	MavenDeployer.Input deployInput = new MavenDeployer.Input(
