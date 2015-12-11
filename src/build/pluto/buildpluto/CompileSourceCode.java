@@ -8,7 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.sugarj.common.Exec;
+import org.sugarj.common.Exec.ExecutionResult;
 import org.sugarj.common.FileCommands;
 
 import build.pluto.builder.Builder;
@@ -21,13 +21,15 @@ import build.pluto.buildjava.JavaCompilerInput;
 import build.pluto.buildjava.compiler.JavacCompiler;
 import build.pluto.buildjava.util.FileExtensionFilter;
 import build.pluto.buildmaven.MavenDependencyResolver;
+import build.pluto.buildmaven.MavenPackager;
+import build.pluto.buildmaven.input.MavenPackagerInput;
 import build.pluto.buildmaven.input.MavenInput;
 import build.pluto.dependency.Origin;
 import build.pluto.output.Out;
 import build.pluto.output.OutputPersisted;
 
 public class CompileSourceCode extends Builder<CompileSourceCode.Input, Out<List<File>>> {
-	
+
     public static class Input implements Serializable {
         private static final long serialVersionUID = -8432928706675953694L;
 
@@ -87,12 +89,14 @@ public class CompileSourceCode extends Builder<CompileSourceCode.Input, Out<List
     			new File(input.targetDir, "sugarj-common"),
     			ExternalDependencies.SUGARJ_COMMON_GIT_REPO,
     			"java7");
-    	
+			compilerOrigin.add(lastBuildReq());
+
     	File javaUtilJar = buildGitMaven(
     			new File(input.targetDir, "java-util"),
     			ExternalDependencies.JAVA_UTIL_PLUTO_GIT_REPO,
     			"master");
-    	
+			compilerOrigin.add(lastBuildReq());
+
     	// 2.c) compile pluto source code
     	requireBuild(input.sourceOrigin);
     	List<File> sourceFiles = FileCommands.listFilesRecursive(input.sourceDir, new FileExtensionFilter("java"));
@@ -124,15 +128,20 @@ public class CompileSourceCode extends Builder<CompileSourceCode.Input, Out<List
     			.setConsistencyCheckInterval(TimeUnit.MINUTES.toMillis(15))
     			.build();
     	requireBuild(GitRemoteSynchronizer.factory, gitInput);
-    	
+
+      Origin gitOrigin = Origin.from(lastBuildReq());
     	String jarName = FileCommands.fileName(rootDir);
-    	String command = String.format("mvn package --batch-mode -DskipTests -Djar.finalName=%s", jarName);
-    	
     	report("Maven build " + jarName);
-    	// TODO build-maven must provide a MavenBuilder that installs dependencies on required files
-    	Exec.run(rootDir, command.split(" "));
-    	
+      MavenPackagerInput packageInput = new MavenPackagerInput
+					.Builder()
+					.setWorkingDir(rootDir)
+		      .setJarName(jarName)
+					.setClassOrigin(gitOrigin)
+					.get();
+      ExecutionResult result = requireBuild(MavenPackager.factory, packageInput).val();
+
     	File jar = new File(rootDir, "target/" + jarName + ".jar").getAbsoluteFile();
+      require(jar);
     	if (!jar.exists())
     		throw new IllegalStateException("File " + jar + " does not exist.");
     	return jar;
