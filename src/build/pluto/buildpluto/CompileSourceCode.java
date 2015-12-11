@@ -135,8 +135,8 @@ public class CompileSourceCode extends Builder<CompileSourceCode.Input, Out<List
       MavenPackagerInput packageInput = new MavenPackagerInput
 					.Builder()
 					.setWorkingDir(rootDir)
-		      .setJarName(jarName)
-					.setClassOrigin(gitOrigin)
+					.setJarName(jarName)
+					.setSourceOrigin(gitOrigin)
 					.get();
       ExecutionResult result = requireBuild(MavenPackager.factory, packageInput).val();
 
