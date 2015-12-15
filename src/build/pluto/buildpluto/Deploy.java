@@ -9,6 +9,8 @@ import java.util.Set;
 
 import org.sugarj.common.FileCommands;
 
+import com.github.maven.plugins.site.SiteMojo;
+
 import build.pluto.builder.Builder;
 import build.pluto.builder.BuilderFactory;
 import build.pluto.builder.BuilderFactoryFactory;
@@ -89,10 +91,12 @@ public class Deploy extends Builder<Deploy.Input, Out<File>> {
     	// 4.b) generate pom file
     	Artifact artifact = new Artifact("build.pluto", "pluto", input.version, null, null);
     	File pomFile = new File(input.targetDir, "pom.xml");
+    	// TODO install dependencies into pom
     	requireBuild(PomGenerator.factory, new PomGenerator.Input(artifact, pomFile));
     	Origin pomOrigin = Origin.from(lastBuildReq());
     	
     	// 4.c) deploy to maven
+    	
     	MavenDeployer.Input deployInput = new MavenDeployer.Input(
 			artifact, 
 			artifactJar, 
